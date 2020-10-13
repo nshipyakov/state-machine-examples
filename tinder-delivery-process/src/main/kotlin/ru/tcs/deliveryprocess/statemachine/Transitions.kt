@@ -2,6 +2,7 @@ package ru.tcs.deliveryprocess.statemachine
 
 import com.tinder.StateMachine
 import ru.tcs.deliveryprocess.statemachine.repository.StateRepository
+import java.time.LocalDateTime
 import java.util.*
 
 fun makeStateMachine(initialState: State, model: Model, repository: StateRepository) = StateMachine.create<State, Event, SideEffect> {
@@ -25,9 +26,16 @@ fun makeStateMachine(initialState: State, model: Model, repository: StateReposit
         on<Event.OnReceive> {
             transitionTo(State.End)
         }
+        on<Event.OnTimeUp> {
+            transitionTo(State.WaitingOfCollecting, SideEffect.Start)
+        }
     }
     onTransition {
         val validTransition = it as? StateMachine.Transition.Valid ?: return@onTransition
+        if(model.startTime == null) {
+            model.startTime = LocalDateTime.now()
+        }
+        model.lastActivityTime = LocalDateTime.now()
         when (validTransition.sideEffect) {
             SideEffect.Start -> {
                 println("Start step")
@@ -40,7 +48,7 @@ fun makeStateMachine(initialState: State, model: Model, repository: StateReposit
                 model.variables["mailId"] = UUID.randomUUID().toString()
             }
         }
-        println(model.state.state)
+        println("state = ${model.state.state}  time = ${model.lastActivityTime}")
         repository.saveModel(model)
     }
 }
