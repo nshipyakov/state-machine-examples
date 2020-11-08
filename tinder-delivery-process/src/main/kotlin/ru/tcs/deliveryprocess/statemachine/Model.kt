@@ -15,6 +15,10 @@ class Model(
 
     var startTime: LocalDateTime? = null
     var lastActivityTime: LocalDateTime? = null
+    var timeToTryAgain: LocalDateTime? = null
+    var attemptsCount: Int? = 0
+    var lastErrorSideEffect: SideEffect? = null
+    var lastEvent: Event? = null
     private var localState: StateMachine<State, Event, SideEffect>? = null
 
     val state: StateMachine<State, Event, SideEffect>

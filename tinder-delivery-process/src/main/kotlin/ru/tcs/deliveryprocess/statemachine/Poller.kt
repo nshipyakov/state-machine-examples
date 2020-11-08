@@ -11,16 +11,20 @@ class Poller(private val repository: StateRepository) {
     suspend fun startPolling() {
         while (continuePolling) {
             repository.getActiveModels(10)
-                .filter {
-                    it.state.state.timerValueInSeconds > 0 &&
-                    it.lastActivityTime?.plusSeconds(it.state.state.timerValueInSeconds)?.isBefore(LocalDateTime.now())
-                        ?: false
-                }
                 .forEach{
-                    it.state.transition(Event.OnTimeUp)
+                    if (it.isRetryReady()) {
+                        it.state.transition(checkNotNull(it.lastEvent))
+                    }
+                    if (it.isTimeoutReady()) {
+                        it.state.transition(Event.OnTimeUp)
+                    }
                 }
-            println("cycle polling. time = ${LocalDateTime.now()}")
             delay(1000)
         }
     }
 }
+
+private fun Model.isTimeoutReady() = this.state.state.timerValueInSeconds > 0 &&
+    this.lastActivityTime?.plusSeconds(this.state.state.timerValueInSeconds)?.isBefore(LocalDateTime.now()) ?: false
+
+private fun Model.isRetryReady() = this.lastEvent != null && this.timeToTryAgain?.isBefore(LocalDateTime.now()) ?: false

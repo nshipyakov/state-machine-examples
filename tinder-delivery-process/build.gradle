@@ -23,5 +23,6 @@ dependencies {
     implementation group: 'org.koin', name: 'koin-core', version: '2.1.6'
     implementation group: 'com.tinder.statemachine', name: 'statemachine', version: '0.2.0'
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.3'
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.12.0-rc1'
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: '1.4.10'
 }

@@ -5,7 +5,11 @@ import ru.tcs.deliveryprocess.statemachine.repository.StateRepository
 import java.time.LocalDateTime
 import java.util.*
 
-fun makeStateMachine(initialState: State, model: Model, repository: StateRepository) = StateMachine.create<State, Event, SideEffect> {
+fun makeStateMachine(
+    initialState: State,
+    model: Model,
+    repository: StateRepository
+) = StateMachine.create<State, Event, SideEffect> {
     initialState(initialState)
     state<State.Start> {
         on<Event.OnExecuteStep> {
@@ -31,24 +35,46 @@ fun makeStateMachine(initialState: State, model: Model, repository: StateReposit
         }
     }
     onTransition {
-        val validTransition = it as? StateMachine.Transition.Valid ?: return@onTransition
+        val validTransition = it as? StateMachine.Transition.Valid
         if(model.startTime == null) {
             model.startTime = LocalDateTime.now()
         }
         model.lastActivityTime = LocalDateTime.now()
-        when (validTransition.sideEffect) {
-            SideEffect.Start -> {
-                println("Start step")
-                println(model.variables)
-                model.variables["orderId"] = UUID.randomUUID().toString()
+        if (validTransition == null) {
+            repository.saveModel(model)
+            return@onTransition
+        }
+        model.timeToTryAgain = null
+        if (validTransition != null) {
+            val availableRetryCount = validTransition.sideEffect?.retry?.count ?: 0
+            if (availableRetryCount > 0 && model.attemptsCount ?: 0 > availableRetryCount) {
+                return@onTransition
             }
-            SideEffect.Send -> {
-                println("Send step")
-                println(model.variables)
-                model.variables["mailId"] = UUID.randomUUID().toString()
+            try {
+                when (validTransition.sideEffect) {
+                    SideEffect.Start -> {
+                        println("Start step")
+                        println(model.variables)
+                        model.variables["orderId"] = UUID.randomUUID().toString()
+                    }
+                    SideEffect.Send -> {
+                        println("Send step")
+                        println(model.variables)
+                        model.variables["mailId"] = UUID.randomUUID().toString()
+                    }
+                }
+            } catch (e: Exception) {
+                val oldModelVersion = repository.getModelByBusinessId(model.businessId)
+                val retryInfo = validTransition.sideEffect?.retry ?: return@onTransition
+                oldModelVersion.timeToTryAgain = LocalDateTime.now().plusSeconds(retryInfo.timerValueInSeconds)
+                oldModelVersion.lastErrorSideEffect = validTransition.sideEffect
+                oldModelVersion.lastEvent = it.event
+                repository.saveModel(oldModelVersion)
+                return@onTransition
             }
         }
         println("state = ${model.state.state}  time = ${model.lastActivityTime}")
         repository.saveModel(model)
+        model.state.transition(Event.OnExecuteStep)
     }
 }

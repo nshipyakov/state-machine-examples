@@ -23,16 +23,14 @@ fun Application.routes(){
 
     routing {
         get("/collect") {
-            repository.getModelsByState(State.WaitingOfCollecting)
-                .find { it.businessId == "123" }
-                ?.state
-                ?.transition(Event.OnCollect)
+            repository.getModelByBusinessId("123")
+                .state
+                .transition(Event.OnCollect)
         }
         get("/deliver") {
-            repository.getModelsByState(State.WaitingOrder)
-                .find { it.businessId == "123" }
-                ?.state
-                ?.transition(Event.OnReceive)
+            repository.getModelByBusinessId("123")
+                .state
+                .transition(Event.OnReceive)
         }
         get("/start") {
             Model(businessId = "123").makeStateMachine(repository).start()
