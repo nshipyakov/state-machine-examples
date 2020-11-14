@@ -27,4 +27,7 @@ class Poller(private val repository: StateRepository) {
 private fun Model.isTimeoutReady() = this.state.state.timerValueInSeconds > 0 &&
     this.lastActivityTime?.plusSeconds(this.state.state.timerValueInSeconds)?.isBefore(LocalDateTime.now()) ?: false
 
-private fun Model.isRetryReady() = this.lastEvent != null && this.timeToTryAgain?.isBefore(LocalDateTime.now()) ?: false
+private fun Model.isRetryReady() =
+    !this.isError
+        && this.lastEvent != null
+        && this.timeToTryAgain?.isBefore(LocalDateTime.now()) ?: false

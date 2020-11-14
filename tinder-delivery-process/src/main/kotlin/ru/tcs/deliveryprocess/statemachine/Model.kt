@@ -4,7 +4,6 @@ import com.tinder.StateMachine
 import ru.tcs.deliveryprocess.statemachine.repository.StateRepository
 import java.time.LocalDateTime
 
-// TODO Таймаут как-то работает
 // TODO Ретраи - не особо сложно
 // TODO Абстракции, а то сейчас все в перемешку
 class Model(
@@ -19,6 +18,7 @@ class Model(
     var attemptsCount: Int? = 0
     var lastErrorSideEffect: SideEffect? = null
     var lastEvent: Event? = null
+    var isError: Boolean = false
     private var localState: StateMachine<State, Event, SideEffect>? = null
 
     val state: StateMachine<State, Event, SideEffect>

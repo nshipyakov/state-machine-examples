@@ -44,13 +44,14 @@ class StateRepository {
         this.lastActivityTime,
         this.timeToTryAgain,
         this.attemptsCount,
-        this.lastEvent?.javaClass?.simpleName?.toString()
+        this.lastEvent?.javaClass?.simpleName?.toString(),
+        this.isError
     )
 
     private fun InstanceEntity.mapToModel() = Model(
         requireNotNull(this.businessId),
         this.variables,
-        requireNotNull(State.getState(requireNotNull(this.state.also { println(it) })))
+        requireNotNull(State.getState(requireNotNull(this.state)))
     ).also {
         it.startTime = this.startTime
         it.lastActivityTime = this.lastActivityTime
@@ -58,6 +59,7 @@ class StateRepository {
         it.attemptsCount = this.attemptsCount
         it.lastEvent = Event.getEvent(this.lastEvent)
         it.makeStateMachine(this@StateRepository)
+        it.isError = this.isError
     }
 }
 
@@ -69,6 +71,7 @@ class InstanceEntity(
     var lastActivityTime: LocalDateTime? = null,
     var timeToTryAgain: LocalDateTime? = null,
     var attemptsCount: Int? = 0,
-    var lastEvent: String? = null
+    var lastEvent: String? = null,
+    var isError: Boolean = false
 )
 

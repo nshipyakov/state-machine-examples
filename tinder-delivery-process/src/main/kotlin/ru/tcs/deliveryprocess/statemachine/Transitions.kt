@@ -69,12 +69,18 @@ fun makeStateMachine(
                 oldModelVersion.timeToTryAgain = LocalDateTime.now().plusSeconds(retryInfo.timerValueInSeconds)
                 oldModelVersion.lastErrorSideEffect = validTransition.sideEffect
                 oldModelVersion.lastEvent = it.event
+                oldModelVersion.attemptsCount = (oldModelVersion.attemptsCount ?: 0) + 1
+                if (availableRetryCount == oldModelVersion.attemptsCount ?: 0) {
+                    oldModelVersion.isError = true
+                }
                 repository.saveModel(oldModelVersion)
                 return@onTransition
             }
         }
-        println("state = ${model.state.state}  time = ${model.lastActivityTime}")
+        model.timeToTryAgain = null
+        model.attemptsCount = null
         repository.saveModel(model)
+        println("state = ${model.state.state}  time = ${model.lastActivityTime}")
         model.state.transition(Event.OnExecuteStep)
     }
 }
